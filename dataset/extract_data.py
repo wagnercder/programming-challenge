@@ -136,7 +136,7 @@ if __name__ == '__main__':
     print('Openings TSV Files')
 
     connection = psycopg2.connect(user = "postgres",
-        password = "",
+        password = "curitiba123",
         host = "127.0.0.1",
         port = "5432",
         database = "sidia_challenge")
@@ -144,14 +144,35 @@ if __name__ == '__main__':
     try:
         cursor = connection.cursor()
         
-        # titles_data = open_tsv(os.getcwd() + '\\title\\data.tsv')
-        # ratings_data = open_tsv(os.getcwd() + '\\rating\\data.tsv')
+        print('-------------------------------------------------------------------')
+        print('-------------------------------------------------------------------')
+        print('-- The database extraction must initiate by typing 1             --\n')
+        print('-- And than the script will populate database with Titles        --\n')
+        print('-- If you already extracted Titles, typing 2 to extract the rest --\n')
+
+        num = -1
+
+        while num == -1:
+            num = int(input("1 or 2: "))
+
+            if(num != 1 and num != 2):
+                num = -1
+                print('Invalid input\n')
+
+        if(num == 1):
+            titles_data = open_tsv(os.getcwd() + '\\title\\data.tsv')
+            ratings_data = open_tsv(os.getcwd() + '\\rating\\data.tsv')
+            insert_title(titles_data, ratings_data, connection, cursor)
+            
+            print('Titles inserted')
         
-        # insert_title(titles_data, ratings_data, connection, cursor)
-        
-        names_data = open_tsv(os.getcwd() + '\\name\\data.tsv')
-        
-        insert_name_map_profession(names_data, connection, cursor)
+        if(num == 2):
+            names_data = open_tsv(os.getcwd() + '\\name\\data.tsv')
+            insert_name_map_profession(names_data, connection, cursor)
+
+            print('Names inserted')
+
+        print('Script finished')
 
     except (Exception, psycopg2.Error) as error :
         print(error)
