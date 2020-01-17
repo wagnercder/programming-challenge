@@ -44,6 +44,12 @@ def insert_genre(title_id, genres, cursor):
     for genre_name in genres:
         genre_to_insert = (title_id, genre_name)
         cursor.execute(genre_insert_query, genre_to_insert)
+    
+def check_title_exist(id, cursor, connection):
+    cursor.execute("SELECT * FROM titles WHERE id = %s", (id,))
+    connection.commit()
+
+    return len(cursor.fetchall())
 
 def insert_title(titles_data, ratings_data, connection, cursor): #insert title and categories
     title_insert_query = """INSERT INTO titles (id, category_id, original_title, primary_title, adult_title, start_year_title, 
@@ -89,26 +95,64 @@ def insert_title(titles_data, ratings_data, connection, cursor): #insert title a
         except (IndexError, ValueError) as error :
             print(error)
             continue
+           
+def insert_map(name_id, titles, cursor, connection):
+    for title_id in titles:
+        if(check_title_exist(title_id, cursor, connection) > 0):
+            cursor.execute("INSERT INTO title_name_map (name_id, title_id) VALUES (%s, %s)", (name_id, title_id))
+        
+    return cursor
+
+def insert_professions(name_id, professions, cursor):
+    for profession in professions:
+        cursor.execute("INSERT INTO professions (name_id, profession_name) VALUES (%s, %s)", (name_id, profession))
+        
+    return cursor
+        
+def insert_name_map_profession(names_data, connection, cursor): #insert both name and map
+    name_insert_query = """INSERT INTO names (id, primary_name,  birth_year_name, death_year_name) VALUES (%s, %s, %s, %s)"""
+
+    for line in names_data:
+        try:
+            name_to_insert = (line[0], 
+                line[1],
+                check_n(line[2]),
+                check_n(line[3]))
+
+            cursor.execute(name_insert_query, name_to_insert)
+
+            professions = line[4].split(",")
+            titles = line[5].split(",")
+            print(name_to_insert)
+            cursor = insert_map(line[0], titles, cursor, connection)
+            cursor = insert_professions(line[0], professions, cursor)
+        
+            connection.commit()
+        except (IndexError, ValueError) as error :
+            print(error)
+            continue
 
 if __name__ == '__main__':
     print('Openings TSV Files')
 
     connection = psycopg2.connect(user = "postgres",
-        password = "curitiba123",
+        password = "",
         host = "127.0.0.1",
         port = "5432",
         database = "sidia_challenge")
-
+    
     try:
         cursor = connection.cursor()
         
-        titles_data = open_tsv(os.getcwd() + '\\title\\data.tsv')
-        ratings_data = open_tsv(os.getcwd() + '\\rating\\data.tsv')
+        # titles_data = open_tsv(os.getcwd() + '\\title\\data.tsv')
+        # ratings_data = open_tsv(os.getcwd() + '\\rating\\data.tsv')
+        
+        # insert_title(titles_data, ratings_data, connection, cursor)
+        
+        names_data = open_tsv(os.getcwd() + '\\name\\data.tsv')
+        
+        insert_name_map_profession(names_data, connection, cursor)
 
-        insert_title(titles_data, ratings_data, connection, cursor)
-
-        # names_data = open_tsv(os.getcwd() + '\\name\\data.tsv')
-    
     except (Exception, psycopg2.Error) as error :
         print(error)
         if(connection):
@@ -120,4 +164,5 @@ if __name__ == '__main__':
             cursor.close()
             connection.close()
             print("PostgreSQL connection is closed")
-    
+
+
