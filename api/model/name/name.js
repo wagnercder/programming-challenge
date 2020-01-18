@@ -1,4 +1,4 @@
-var database = require('./../../database/connection');
+var database = require('./../../connection/connection');
 // var Professions = require("./../professions/professions");
 
 database.model();

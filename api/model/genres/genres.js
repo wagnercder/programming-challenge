@@ -1,4 +1,4 @@
-var database = require('./../../database/connection');
+var database = require('../../database/connection');
 var Titles = require('../titles/titles');
 
 database.model();
