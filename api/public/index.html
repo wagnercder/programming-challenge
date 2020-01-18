@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Sidia Challenge</title>
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+	<!-- Font Awesome CSS -->
+	<link rel="stylesheet" type="text/css" href="assets/font-awesome-4.6.3/css/font-awesome.min.css">
+	<!-- DataTable CSS -->
+	<link rel="stylesheet" type="text/css" href="assets/datatable/DataTables-1.10.12/css/dataTables.bootstrap.min.css">
+	<!-- DataTable extension css -->
+	<link rel="stylesheet" type="text/css" href="assets/datatable_extension/buttons.dataTables.min.css">
+    <!-- Custom css: SB Admin 2 -->
+    <link href="assets/css/sb-admin-2.css" rel="stylesheet">
+</head>
+
+<body>   
+	<!-- Navigation -->
+	<nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+		<div class="navbar-header">
+			<a class="navbar-brand">Wagner Queiroz - Sidia Challenger</a>
+		</div>
+	</nav> 
+	<!-- End Navigation -->
+
+	<div id="page-wrapper">
+	
+		<div class="row"> 
+			<div class="col-lg-12">
+				<h5 class="" >
+					<div class="col-lg-1" style="display:inline-block">
+						<div>Categories:</div>
+						<select name="select-category" id="categories-drop"></select>
+					</div>
+					<div class="col-lg-2" style="display:inline-block">
+						<div>Choose Year:</div>
+						<select name="select-year" id="yearpicker"></select>
+					</div>
+				</h5>
+			</div>
+
+			<div class="col-lg-12" style = 'margin-top:20px;'>
+				<div class="col-lg-2" style="display:inline-block;">
+					<button type="button" id = "load-datatable" class="btn btn-primary" onclick='initDataTable()'>List All Titles</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="row" id="tableData">
+			<div class="col-lg-12"  style="margin-top: 40px">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						Titles
+					</div>
+					<div class="panel-body">
+						<div class="table-responsive">
+							<table id="sort" class="table table-striped table-bordered display responsive nowrap" cellspacing="0" width="100%">
+								<thead>
+									<tr>
+										<th>#</th>
+										<th>Original Title</th>
+										<th>Primary Title</th>
+										<th>Category Name</th>
+										<th>Adult Title</th>
+										<th>Start Year</th>
+										<th>End Year</th>
+										<th>Runtime Minutes</th>
+										<th>Average Rating</th>
+										<th>Number of Votes</th>
+									</tr>
+								</thead>
+
+								<!-- DATATABLE ROW -->
+								<tbody>
+										
+								</tbody>
+
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div> 
+	</div>
+	<!-- /#page-wrapper -->
+
+    <!-- Jquery &amp; Bootstrap Javascript -->
+	<script type="text/javascript" src="assets/jquery/jquery-3.1.0.min.js"></script>
+	<script type="text/javascript" src="assets/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+	<!-- DataTable Javascript -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.1/js/select2.min.js"></script>
+	<script type="text/javascript" src="assets/datatable/DataTables-1.10.12/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" src="assets/datatable/DataTables-1.10.12/js/dataTables.bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/datatable/datatables.min.js"></script>
+    <script src="assets/datatable_extension/vfs_fonts.js"></script>
+	
+
+	<script type="text/javascript">
+		var year = -1;
+		var category_id = 1;
+		var init = false;
+
+		$(document).ready(function() {
+			$.ajax({
+				type: 'GET',
+				url: 'http://127.0.0.1:4000/categories',
+				dataType: 'json',
+				success: function (data) {
+					console.log(data);
+					data.forEach( item => {
+						$("#categories-drop").append('<option value="' + item.id + '">' + item.category_name + '</option>');
+					})
+				}
+			});
+
+			for (i = new Date().getFullYear(); i > 1900; i--)
+			{
+				if(i == 2020) $('#yearpicker').append($('<option />').val(-1).html('None'));
+			
+				$('#yearpicker').append($('<option />').val(i).html(i));
+			}
+
+			$('#yearpicker').change( function(){
+				year = $('#yearpicker').val();
+
+				if(year > -1) $('#load-datatable').html('List Top 10');
+				else $('#load-datatable').html('List All Titles');
+			});
+
+			$('#categories-drop').change( function(){
+				category_id = $('#categories-drop').val();				
+			});
+
+        }); // End Document Ready
+
+		var table;
+
+		function clearAndRedraw(){
+			console.log('redraw');
+			$.ajax({
+				url: 'http://127.0.0.1:4000/titles',
+				type: 'POST',
+				data: JSON.stringify({
+					year: year,
+					category_id: category_id,
+					limit: 1000,
+					offset: 0
+				}),
+				dataType: 'json',
+				contentType: 'application/json',
+				success: function (data) {
+					console.log(data);
+					table.clear().draw();
+					table.rows.add(data.data).draw(); // Add new data
+					table.columns.adjust().draw(); // Redraw the DataTable
+					table.DataTable().rows.add(data.data).draw(); // Redraw the DataTable
+				},
+				error: function (erro) {
+					console.log('Erro: ' + erro);
+				}
+			});
+		}
+
+		function initDataTable(){
+			
+			if(init) clearAndRedraw();
+			else{
+				console.log('init');
+				init = true;
+
+				table = $('#sort').DataTable({
+					ajax:{
+						"url": 'http://127.0.0.1:4000/titles',
+						"type": "POST",
+						"data": {
+							year: year,
+							category_id: category_id,
+							limit: 1000,
+							offset: 0
+						}
+					} ,
+					responsive: true,
+					columns: [
+						{"data": "id"},
+						{"data": "original_title"},
+						{"data": "primary_title"},
+						{"data": "categories.category_name"},
+						{"data": "adult_title"},
+						{"data": "start_year_title"},
+						{"data": "end_year_title"},
+						{"data": "runtime_minutes_title"},
+						{"data": "average_rating_title"},
+						{"data": "num_votes_title"}
+					],
+					'order': [[1, 'asc']]
+				});
+			}
+		}
+	</script>
+</body>
+</html>

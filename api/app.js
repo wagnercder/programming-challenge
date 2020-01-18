@@ -22,6 +22,13 @@ app.use(function(req, res, next) {
 
 });
 
+app.use(express.static("public"));
+
+//Redirect to home
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname + '/public/index.html'));
+});
+
 routers(app);
 
 var server = app.listen(4000);
