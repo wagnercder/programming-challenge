@@ -6,7 +6,7 @@ O projeto foi desenvolvido a partir da utilização das seguintes tecnologias:
     - Node.js (APi)
     - Bookshelf.js (APi)
     - PostgreSql (Base de Dados)
-    - Python (Python)
+    - Python (Migração)
 
     Para a Api
     - A escolha de Node se deu devido ao costume com o uso no dia a dia, seja para criação de serviços
